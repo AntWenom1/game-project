@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  apache:
+    image: php:8.2-apache
+    container_name: apache_server
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public_html:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - lamp_network
+    command: bash -c "apt-get update && apt-get install -y libpq-dev libpng-dev libjpeg-dev libfreetype6-dev && docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install gd mysqli pdo pdo_mysql && apache2-foreground"
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_server
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - lamp_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: rootpassword
+    depends_on:
+      - mysql
+    networks:
+      - lamp_network
+
+networks:
+  lamp_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
